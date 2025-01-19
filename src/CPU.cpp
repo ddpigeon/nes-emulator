@@ -11,11 +11,13 @@ CPU::CPU()
 CPU::~CPU()
 {
 }
-uint8_t CPU::read(uint16_t addr) {
+uint8_t CPU::read(uint16_t addr)
+{
     return bus->read(addr);
 }
 
-void CPU::write(uint16_t addr, uint8_t data) {
+void CPU::write(uint16_t addr, uint8_t data)
+{
     bus->write(addr, data);
 }
 
@@ -46,6 +48,16 @@ uint8_t CPU::ACC()
 uint8_t CPU::IMM()
 {
     operand_addr = pc++;
+    return 0;
+}
+
+uint8_t CPU::REL()
+{
+    operand_addr = read(pc++);
+    if (operand_addr & 0x80)
+    {
+        operand_addr |= 0xFF00;
+    }
     return 0;
 }
 

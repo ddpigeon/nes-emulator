@@ -63,6 +63,7 @@ public:
     // addressing modes:
     uint8_t ACC();
     uint8_t IMM();
+    uint8_t REL();
 
     uint8_t ZEP();
     uint8_t ZPX();
