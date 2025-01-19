@@ -10,8 +10,8 @@ class CPU;
 typedef struct instruction {
     std::string name;
     uint8_t cycles;
-    uint8_t (CPU::*addrmode)(void) = nullptr;
-    uint8_t (CPU::*operation)(void) = nullptr;
+    void (CPU::*operation)(void);
+    void (CPU::*addrmode)(void);
 } instruction;
 
 class CPU {
@@ -30,10 +30,13 @@ class CPU {
         uint8_t a = 0x00;
         uint8_t x = 0x00;
         uint8_t y = 0x00;
+        uint8_t fl = 0x00;
 
-        uint8_t fetched = 0x00;
+        // These do not exist, stores value the instruction operates on and the address of value.
+        uint8_t operand;
+        uint8_t operand_addr;
 
-        enum FLAGS {
+        enum flags {
             C = (1 << 0), //carry
             Z = (1 << 1), //zero
             I = (1 << 2), //disable interrupts
@@ -48,20 +51,26 @@ class CPU {
 
     public:
         // addressing modes:
-        uint16_t ACC();
-        uint16_t IMM();
+        void ACC();
+        void IMM();
 
-        uint16_t ZEP();
-        uint16_t ZPX();
-        uint16_t ZPY();
+        void ZEP();
+        void ZPX();
+        void ZPY();
 
-        uint16_t IND();
-        uint16_t INX();
-        uint16_t INY();
+        void IND();
+        void INX();
+        void INY();
 
-        uint16_t ABS();
-        uint16_t ABX();
-        uint16_t ABY();
+        void ABS();
+        void ABX();
+        void ABY();
+
+    public:
+        //flag stuff
+        void setFlag(flags f, bool v);
+        bool getFlag(flags f);
+
 
     public:
         // put instruction functions here
