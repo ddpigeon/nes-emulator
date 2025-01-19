@@ -1,4 +1,5 @@
 #include <iostream>
+#include "../include/Bus.hpp"
 #include "../include/CPU.hpp"
 
 CPU::CPU() {
@@ -9,6 +10,13 @@ CPU::CPU() {
 CPU::~CPU(){
 }
 
+uint8_t CPU::read(uint16_t addr) {
+    return bus->read(addr);
+}
+
+void CPU::write(uint16_t addr, uint8_t data) {
+    bus->write(addr, data);
+}
 
 void CPU::setFlag(flags f, bool v) {
     if (v) {

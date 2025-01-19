@@ -5,8 +5,9 @@
 #include <array>
 #include <string>
 
-class CPU;
 
+class CPU;
+class Bus;
 typedef struct instruction {
     std::string name;
     uint8_t cycles;
@@ -24,7 +25,13 @@ class CPU {
 
         void clock();
 
+        void ConnectBus(Bus *b) {
+            bus = b;
+        }
+
     private:
+        // Communication bus
+        Bus *bus = nullptr;
         uint16_t pc = 0x0000;
         uint8_t sp = 0x00;
         uint8_t a = 0x00;
