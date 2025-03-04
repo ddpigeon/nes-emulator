@@ -1,80 +1,123 @@
 #ifndef CPU_HPP
 #define CPU_HPP
 
-#include <cstdint>
-#include <array>
-#include <string>
+#include "Typedefs.hpp"
 
-class CPU;
-
-typedef struct instruction {
-    std::string name;
-    uint8_t cycles;
-    void (CPU::*operation)(void);
-    void (CPU::*addrmode)(void);
-} instruction;
-
-class CPU {
+class CPU
+{
     public:
-        CPU();
-        ~CPU();
+        CPU() = default;
+        ~CPU() = default;
 
-        void write(uint16_t addr, uint8_t data);
-        uint8_t read(uint16_t addr);
-
-        void clock();
+        // Input Signals into the CPU are Public
+        void Clock();
+        void Reset();
+        void InterruptRequest();
+        void NonMaskableInterrupt();
 
     private:
-        uint16_t pc = 0x0000;
-        uint8_t sp = 0x00;
-        uint8_t a = 0x00;
-        uint8_t x = 0x00;
-        uint8_t y = 0x00;
-        uint8_t fl = 0x00;
 
-        // These do not exist, stores value the instruction operates on and the address of value.
-        uint8_t operand;
-        uint8_t operand_addr;
+        Byte FetchByteFromMemory(const Address);
+        Byte FetchDataForOperation();
+        void WriteByteToMemory(const Address, const Byte);
 
-        enum flags {
-            C = (1 << 0), //carry
-            Z = (1 << 1), //zero
-            I = (1 << 2), //disable interrupts
-            D = (1 << 3), //decimal mode
-            B = (1 << 4), //break
-            U = (1 << 5), //unused
-            V = (1 << 6), //overflow
-            N = (1 << 7)  //negative
-        };
+        // TODO: Change the return types to use std::optional<Byte> rather than Byte!
+        // Addressing Modes
+        bool ImplicitMode();
+        bool AccumulatorMode();
+        bool ImmediateMode();
+        bool ZeroPageMode();
+        bool ZeroPageXMode();
+        bool ZeroPageYMode();
+        bool AbsoluteMode();
+        bool AbsoluteXMode();
+        bool AbsoluteYMode();
+        bool IndirectMode();
+        bool IndirectXMode();
+        bool IndirectYMode();
+        bool RelativeMode();
 
-        std::array<instruction, 255> instruction_table;
+        // Opcode Functions
+        bool ADC(); // Add with Carry
+        bool AND(); // And with Accumulator
+        bool ASL(); // Arithmetic Shift Left
+        bool BCC(); // Branch on Carry Clear
+        bool BCS(); // Branch on Carry Set
+        bool BEQ(); // Branch on Equal
+        bool BIT(); // Bit Test
+        bool BMI(); // Branch on Minus
+        bool BNE(); // Branch on Not Equal
+        bool BPL(); // Branch on Plus
+        bool BRK(); // Force Break
+        bool BVC(); // Branch on Overflow Clear
+        bool BVS(); // Branch on Overflow Set
+        bool CLC(); // Clear Carry Flag
+        bool CLD(); // Clear Decimal Mode
+        bool CLI(); // Clear Interrupt Disable
+        bool CLV(); // Clear Overflow Flag
+        bool CMP(); // Compare Accumulator
+        bool CPX(); // Compare X Register
+        bool CPY(); // Compare Y Register
+        bool DEC(); // Decrement Memory
+        bool DEX(); // Decrement X Register
+        bool DEY(); // Decrement Y Register
+        bool EOR(); // Exclusive Or with Accumulator
+        bool INC(); // Increment Memory
+        bool INX(); // Increment X Register
+        bool INY(); // Increment Y Register
+        bool JMP(); // Jump to Address
+        bool JSR(); // Jump to Subroutine
+        bool LDA(); // Load Accumulator
+        bool LDX(); // Load X Register
+        bool LDY(); // Load Y Register
+        bool LSR(); // Logical Shift Right
+        bool NOP(); // No Operation
+        bool ORA(); // Or with Accumulator
+        bool PHA(); // Push Accumulator
+        bool PHP(); // Push Processor Status
+        bool PLA(); // Pull Accumulator
+        bool PLP(); // Pull Processor Status
+        bool ROL(); // Rotate Left
+        bool ROR(); // Rotate Right
+        bool RTI(); // Return from Interrupt
+        bool RTS(); // Return from Subroutine
+        bool SBC(); // Subtract with Carry
+        bool SEC(); // Set Carry Flag
+        bool SED(); // Set Decimal Mode
+        bool SEI(); // Set Interrupt Disable
+        bool STA(); // Store Accumulator
+        bool STX(); // Store X Register
+        bool STY(); // Store Y Register
+        bool TAX(); // Transfer Accumulator to X
+        bool TAY(); // Transfer Accumulator to Y
+        bool TSX(); // Transfer Stack Pointer to X
+        bool TXA(); // Transfer X to Accumulator
+        bool TXS(); // Transfer X to Stack Pointer
+        bool TYA(); // Transfer Y to Accumulator
+        bool XXX(); // Catches all illegal Instructions!
 
-    public:
-        // addressing modes:
-        void ACC();
-        void IMM();
+        // Utility Functions
+        inline uint8_t GetNumberOfBaseClockCyclesForOperation(const Opcode);
+        inline bool GetFlagFromStatusRegister(const StatusRegisterFlags::Flags);
+        inline void SetFlagInStatusRegister(const StatusRegisterFlags::Flags, const bool);
 
-        void ZEP();
-        void ZPX();
-        void ZPY();
+    private:
+        Register Accumulator;
+        Register X;
+        Register Y;
+        Register StackPointer;
+        Register StatusRegister;
+        LargeRegister ProgramCounter;
+    
+        Byte FetchedData;
+        Address AbsoluteAddress;
+        Address RelativeAddress;
+        Opcode CurrentOpcode;
+        uint8_t CyclesLeft;
 
-        void IND();
-        void INX();
-        void INY();
+        uint16_t TemporaryStorage;
 
-        void ABS();
-        void ABX();
-        void ABY();
-
-    public:
-        //flag stuff
-        void setFlag(flags f, bool v);
-        bool getFlag(flags f);
-
-
-    public:
-        // put instruction functions here
-
+        std::array<Instruction, NUMBER_OF_LEGAL_INSTRUCTIONS> OpcodeTable;
 };
 
 #endif
