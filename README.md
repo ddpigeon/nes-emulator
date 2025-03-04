@@ -7,4 +7,3 @@ Tasks:
 - [x] Bus
 - [x] Memory
 - [ ] graphics
-- [ ] sound
