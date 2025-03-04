@@ -2,9 +2,9 @@
 An NES emulator (IEEE project real)
 
 Tasks:
-- [ ] barebones
+- [x] barebones
 - [x] CPU instructions
 - [x] Bus
+- [x] Memory
 - [ ] graphics
 - [ ] sound
-- [ ] profit (??!?)
