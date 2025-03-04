@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include "../include/Bus.hpp"
+#include "../include/Typedefs.hpp"
 
 Bus::Bus() {
     // Connect CPU to communication bus
@@ -15,13 +16,13 @@ Bus::~Bus() {
 
 }
 
-void Bus::write(uint16_t addr, uint8_t data) {
+void Bus::write(Address addr, Byte data) {
     if (addr >= 0x0000 && addr <= 0xFFFF) {
         ram[addr] = data;
     }
 }
 
-uint8_t Bus::read(uint16_t addr, bool bReadOnly) {
+Byte Bus::read(Address addr, bool bReadOnly) {
     if (addr >= 0x0000 && addr <= 0xFFFF) {
         return ram[addr];
     }

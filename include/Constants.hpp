@@ -2,7 +2,7 @@
 #define CONSTANTS_HPP
 
 #include <cstdint>
-#include <pair>
+#include <utility>
 
 constexpr std::pair<uint8_t, uint8_t> MEMORY_UNIT = { 0x0000, 0x07FF };
 constexpr uint8_t MEMORY_SIZE = MEMORY_UNIT.second - MEMORY_UNIT.first + 1;

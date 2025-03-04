@@ -1,5 +1,8 @@
 #include "../include/CPU.hpp"
 #include "../include/Typedefs.hpp"
+#include "../include/Bus.hpp"
+
+// TODO: Fix and register the opcodes in the Opcode Table
 
 CPU::CPU()
 {
@@ -14,27 +17,38 @@ CPU::~CPU()
 void
 CPU::Clock()
 {
-    if (CyclesLeftLeft == 0) {
+    if (CyclesLeft == 0) {
         // If we have entered here, it means that the previous instruction has completed
         // its cycle count and we can move on to the next instruction.
 
-        Opcode Opcode = FetchByteFromMemory(ProgramCounter);
+        Opcode opcode = FetchByteFromMemory(ProgramCounter);
         ++ProgramCounter;
-        CyclesLeftLeft = GetNumberOfBaseClockCyclesLeftForOperation(Opcode);
+        CyclesLeft = GetNumberOfBaseClockCyclesLeftForOperation(opcode);
         
-        AddressingMode = OpcodeTable[Opcode].addressingMode;
-        OperationFunction = OpcodeTable[Opcode].operation;
+        AddressingModeFunc = OpcodeTable[opcode].addressingMode;
+        OperationFunc = OpcodeTable[opcode].operation;
 
-        CyclesLeftLeft +=  (this->*AddressingMode)() & (this->*OperationFunction)() ? 1 : 0;
+        CyclesLeft +=  (this->*AddressingModeFunc)() & (this->*OperationFunc)() ? 1 : 0;
     }
 
-    --CyclesLeftLeft;
+    --CyclesLeft;
+}
+
+// read and writes
+uint8_t CPU::FetchByteFromMemory(uint16_t addr)
+{
+    return bus->read(addr);
+}
+
+void CPU::WriteByteToMemory(uint16_t addr, uint8_t data)
+{
+    bus->write(addr, data);
 }
 
 bool
 CPU::ImplicitMode()
 {
-    FetchedDataData = Accumulator; // Reset the Byte;
+    FetchedData = Accumulator; // Reset the Byte;
     return false;
 }
 
@@ -48,7 +62,7 @@ CPU::ImmediateMode()
 bool
 CPU::AccumulatorMode()
 {
-    FetchedDataData = Accumulator;
+    FetchedData = Accumulator;
     return false;
 }
 
@@ -186,7 +200,7 @@ Byte
 CPU::FetchDataForOperation()
 {
     if (OpcodeTable.at(CurrentOpcode).addressingMode != &CPU::ImplicitMode && OpcodeTable.at(CurrentOpcode).addressingMode != &CPU::AccumulatorMode) {
-        FetchedData = FetchDataForOperation(ProgramCounter);
+        FetchedData = FetchByteFromMemory(ProgramCounter);
     }
     return FetchedData;
 }
@@ -334,7 +348,7 @@ bool CPU::BRK() {
     WriteByteToMemory(0x0100 + StackPointer, ProgramCounter & 0x00FF);
     StackPointer--;
     SetFlagInStatusRegister(StatusRegisterFlags::B, 1);
-    WriteByteToMemory(0x0100 + StackPointer, status);
+    WriteByteToMemory(0x0100 + StackPointer, StatusRegister);
     StackPointer--;
     SetFlagInStatusRegister(StatusRegisterFlags::B, 0);
     ProgramCounter = (uint16_t)FetchByteFromMemory(0xFFFE) | ((uint16_t)FetchByteFromMemory(0xFFFF) << 8);
@@ -385,7 +399,7 @@ bool CPU::CLV() {
 
 bool CPU::CMP() {
     FetchDataForOperation();
-    TemporaryStorage = (uint16_t)a - (uint16_t)FetchedData;
+    TemporaryStorage = (uint16_t) Accumulator - (uint16_t)FetchedData;
     SetFlagInStatusRegister(StatusRegisterFlags::C, Accumulator >= FetchedData);
     SetFlagInStatusRegister(StatusRegisterFlags::Z, (TemporaryStorage & 0x00FF) == 0x0000);
     SetFlagInStatusRegister(StatusRegisterFlags::N, TemporaryStorage & 0x0080);
@@ -394,7 +408,7 @@ bool CPU::CMP() {
 
 bool CPU::CPX() {
     FetchDataForOperation();
-    TemporaryStorage = (uint16_t)x - (uint16_t)FetchedData;
+    TemporaryStorage = (uint16_t)X - (uint16_t)FetchedData;
     SetFlagInStatusRegister(StatusRegisterFlags::C, X >= FetchedData);
     SetFlagInStatusRegister(StatusRegisterFlags::Z, (TemporaryStorage & 0x00FF) == 0x0000);
     SetFlagInStatusRegister(StatusRegisterFlags::N, TemporaryStorage & 0x0080);
@@ -403,7 +417,7 @@ bool CPU::CPX() {
 
 bool CPU::CPY() {
     FetchDataForOperation();
-    TemporaryStorage = (uint16_t)y - (uint16_t)FetchedData;
+    TemporaryStorage = (uint16_t)Y - (uint16_t)FetchedData;
     SetFlagInStatusRegister(StatusRegisterFlags::C, Y >= FetchedData);
     SetFlagInStatusRegister(StatusRegisterFlags::Z, (TemporaryStorage & 0x00FF) == 0x0000);
     SetFlagInStatusRegister(StatusRegisterFlags::N, TemporaryStorage & 0x0080);
@@ -420,14 +434,14 @@ bool CPU::DEC() {
 }
 
 bool CPU::DEX() {
-    x--;
+    X--;
     SetFlagInStatusRegister(StatusRegisterFlags::Z, X == 0x00);
     SetFlagInStatusRegister(StatusRegisterFlags::N, X & 0x80);
     return 0;
 }
 
 bool CPU::DEY() {
-    y--;
+    Y--;
     SetFlagInStatusRegister(StatusRegisterFlags::Z, Y == 0x00);
     SetFlagInStatusRegister(StatusRegisterFlags::N, Y & 0x80);
     return 0;
@@ -451,14 +465,14 @@ bool CPU::INC() {
 }
 
 bool CPU::INX() {
-    x++;
+    X++;
     SetFlagInStatusRegister(StatusRegisterFlags::Z, X == 0x00);
     SetFlagInStatusRegister(StatusRegisterFlags::N, X & 0x80);
     return 0;
 }
 
 bool CPU::INY() {
-    y++;
+    Y++;
     SetFlagInStatusRegister(StatusRegisterFlags::Z, Y == 0x00);
     SetFlagInStatusRegister(StatusRegisterFlags::N, Y & 0x80);
     return 0;
@@ -535,7 +549,7 @@ bool CPU::PHA() {
 }
 
 bool CPU::PHP() {
-    WriteByteToMemory(0x0100 + StackPointer, StatusRegister | B | U);
+    WriteByteToMemory(0x0100 + StackPointer, StatusRegister | StatusRegisterFlags::B | StatusRegisterFlags::U);
     SetFlagInStatusRegister(StatusRegisterFlags::B, 0);
     SetFlagInStatusRegister(StatusRegisterFlags::U, 0);
     StackPointer--;
@@ -586,8 +600,8 @@ bool CPU::ROR() {
 bool CPU::RTI() {
     StackPointer++;
     StatusRegister = FetchByteFromMemory(0x0100 + StackPointer);
-    StatusRegister &= ~B;
-    StatusRegister &= ~U;
+    StatusRegister &= ~StatusRegisterFlags::B;
+    StatusRegister &= ~StatusRegisterFlags::U;
 
     StackPointer++;
     ProgramCounter = (uint16_t)FetchByteFromMemory(0x0100 + StackPointer);

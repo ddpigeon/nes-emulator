@@ -1,30 +1,43 @@
-#ifndef CONSTANTS_HPP
-#define CONSTANTS_HPP
+#ifndef TYPEDEFS_HPP
+#define TYPEDEFS_HPP
 
-#include <cstdint>
-#include <pair>
+#include "CPU.hpp"
 
-constexpr std::pair<uint8_t, uint8_t> MEMORY_UNIT = { 0x0000, 0x07FF };
-constexpr uint8_t MEMORY_SIZE = MEMORY_UNIT.second - MEMORY_UNIT.first + 1;
+class CPU;
 
-constexpr std::pair<uint8_t, uint8_t> APU_UNIT = { 0x4000, 0x4017 };
-constexpr uint8_t APU_SIZE = APU_UNIT.second - APU_UNIT.first + 1;
+typedef uint8_t Byte;
+typedef uint16_t Address;
 
-constexpr std::pair<uint8_t, uint8_t> PPU_UNIT = { 0x2000, 0x2007 };
-constexpr uint8_t PPU_SIZE = PPU_UNIT.second - PPU_UNIT.first + 1;
+typedef uint8_t Register;
+typedef uint16_t LargeRegister;
 
-constexpr std::pair<uint8_t, uint8_t> CARTRIDGE_UNIT = { 0x4020, 0xFFFF };
-constexpr uint8_t CARTRIDGE_SIZE = CARTRIDGE_UNIT.second - CARTRIDGE_UNIT.first + 1;
+typedef Byte Opcode;
 
-constexpr std::pair<uint8_t, uint8_t> PPU_GRAPHICS_MEMORY = { 0x0000, 0x0FFF };
-constexpr uint8_t PPU_GRAPHICS_SIZE = PPU_GRAPHICS_MEMORY.second - PPU_GRAPHICS_MEMORY.first + 1;
+namespace StatusRegisterFlags {
+    enum Flags{
+        C = (1 << 0), // Carry Bit
+        Z = (1 << 1), // Zero
+        I = (1 << 2), // Interrupt Disable
+        D = (1 << 3), // Decimal Mode
+        B = (1 << 4), // Break
+        U = (1 << 5), // Unused
+        V = (1 << 6), // Overflow
+        N = (1 << 7) // Negative
+    };
+}
 
-constexpr std::pair<uint8_t, uint8_t> PPU_VRAM_UNIT = { 0x2000, 0x27FF };
-constexpr uint8_t PPU_VRAM_SIZE = PPU_VRAM_UNIT.second - PPU_VRAM_UNIT.first + 1;
+typedef bool (CPU::*AddressingMode)();
+typedef bool (CPU::*OperationFunction)();
 
-constexpr std::pair<uint8_t, uint8_t> PPU_PALLETES_UNIT = { 0x3F00, 0x3FFF };
-constexpr uint8_t PPU_PALLETES_SIZE = PPU_PALLETES_UNIT.second - PPU_PALLETES_UNIT.first + 1;
+struct Instruction {
+    AddressingMode addressingMode;
+    OperationFunction operation;
+    const uint8_t cyclesCount;
 
-constexpr uint8_t NUMBER_OF_LEGAL_INSTRUCTIONS = 56;
+    Instruction() : addressingMode(nullptr), operation(nullptr), cyclesCount(0) {}
+    
+    Instruction(AddressingMode mode, OperationFunction op, uint8_t cycles)
+        : addressingMode(mode), operation(op), cyclesCount(cycles) {}
+};
 
 #endif

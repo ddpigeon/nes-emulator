@@ -1,13 +1,23 @@
 #ifndef CPU_HPP
 #define CPU_HPP
 
+#include <cstdint>
+#include <array>
+#include <string>
 #include "Typedefs.hpp"
+#include "Constants.hpp"
+
+class CPU;
+class Bus;
 
 class CPU
 {
     public:
         CPU() = default;
         ~CPU() = default;
+        #include <cstdint>
+        #include <array>
+        #include <string>
 
         // Input Signals into the CPU are Public
         void Clock();
@@ -15,8 +25,17 @@ class CPU
         void InterruptRequest();
         void NonMaskableInterrupt();
 
+        void write(uint16_t addr, uint8_t data);
+        uint8_t read(uint16_t addr);
+
+        void ConnectBus(Bus *b) {
+            bus = b;
+        }
+
+
     private:
 
+        Bus *bus = nullptr;
         Byte FetchByteFromMemory(const Address);
         Byte FetchDataForOperation();
         void WriteByteToMemory(const Address, const Byte);
@@ -97,7 +116,7 @@ class CPU
         bool XXX(); // Catches all illegal Instructions!
 
         // Utility Functions
-        inline uint8_t GetNumberOfBaseClockCyclesForOperation(const Opcode);
+        inline uint8_t GetNumberOfBaseClockCyclesLeftForOperation(const Opcode);
         inline bool GetFlagFromStatusRegister(const StatusRegisterFlags::Flags);
         inline void SetFlagInStatusRegister(const StatusRegisterFlags::Flags, const bool);
 
@@ -108,6 +127,8 @@ class CPU
         Register StackPointer;
         Register StatusRegister;
         LargeRegister ProgramCounter;
+        AddressingMode AddressingModeFunc;
+        OperationFunction OperationFunc;
     
         Byte FetchedData;
         Address AbsoluteAddress;
